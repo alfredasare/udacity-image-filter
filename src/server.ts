@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from "dotenv";
 import bodyParser from 'body-parser';
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
+import {requireAuth} from "./middlewares/requireAuth";
 
 dotenv.config();
 
@@ -29,27 +30,7 @@ dotenv.config();
   // RETURNS
   //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
 
-  app.use((req, res, next) => {
-    if (!req.headers || !req.headers.authorization) {
-      return res.status(401).send({ message: "No authorization headers" });
-    }
-
-    const tokenBearer = req.headers.authorization.split(" ");
-
-    if (tokenBearer.length !== 2) {
-      return res.status(401).send({ message: "Malformed token" });
-    }
-
-    const token = tokenBearer[1];
-
-    if (token === process.env.UDAGRAM_REST_TOKEN) {
-      next();
-    } else {
-      return res.status(500).send({ message: 'Failed to authenticate' });
-    }
-  });
-
-  app.get("/filteredimage", async (req, res) => {
+  app.get("/filteredimage", requireAuth, async (req, res) => {
     const { image_url } = req.query;
 
     // Validate image url query
